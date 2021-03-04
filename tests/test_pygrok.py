@@ -147,10 +147,35 @@ def test_hotloading_pats():
     m = grok.match(text)
     assert m == {'birthyear': 1989}, 'grok match failed:%s, %s' % (text, pat, )
 
+def test_arr_pats():
+    custom_pats = {"POWER": "(?:%{NUMBER}|(-inf))", "HEX":"(?:(0[x,X])*(?:[0-9a-zA-Z]+))", "HEXENUM":"%{HEX:v}[ ]?", "HEXLINE":"%{HEXENUM:col:arr}\n?" }
+    
+    text = '0x1 0x2 0x3'
+    pat = '%{HEXLINE:row}'
+    grok = Grok(pat ,custom_patterns = custom_pats, fullmatch = False)
+    m = grok.match(text)
+    assert      (m['row'] == '0x1 0x2 0x3'
+            and m['row_col']['_str'] == '0x1 0x2 0x3'
+            and m['row_col'][0]["v"] == '0x1'
+            and m['row_col'][1]["v"] == '0x2'
+            and m['row_col'][2]["v"] == '0x3'
+                 ), 'grok match failed:%s, %s' % (text, pat, )
+    # matches
+
+    text = '0x1 0x2 0x3\n0x4 0x5 0x6\n0x7 0x8 0x9'
+    pat = '%{HEXLINE:row:arr}'
+    grok.set_search_pattern(pat)
+    m = grok.match(text)
+    for i in range(2):
+        for j in range(3):
+            assert m['row'][i]['col'][j]['v'] == "0x"+ "%d"%(i*3 + j + 1), 'grok match failed:%s, %s' % (text, pat, )
+
 
 if __name__ == '__main__':
-    test_one_pat()
-    test_multiple_pats()
-    test_custom_pats()
-    test_custom_pat_files()
-    test_hotloading_pats()
+
+    #test_one_pat()
+    #test_multiple_pats()
+    #test_custom_pats()
+    #test_custom_pat_files()
+    #test_hotloading_pats()
+    test_arr_pats()
