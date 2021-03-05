@@ -171,6 +171,190 @@ def test_arr_pats():
             assert m['row'][i]['col'][j]['v'] == "0x"+ "%d"%(i*3 + j + 1), 'grok match failed:%s, %s' % (text, pat, )
 
 
+def test_struct_pats():
+    import json
+    custom_pats = {"POWER": "(?:%{NUMBER}|(-inf))", "HEX": "(?:(0[x,X])*(?:[0-9a-zA-Z]+))", "HEXENUM": "%{HEX:v}[ ]?",
+                   "HEXLINE": "%{HEXENUM:col:arr}\n?"}
+
+    text = json.dumps({"a": {"c": {"d": 4}, "e": [1, 2, 3]}})
+    custom_pats.update({"EA":"%{NUMBER:v:int}(,\s*)*"})
+    custom_pats.update({"E":"(.*): \[%{EA:e:arr}\]"})
+    grok = Grok("(.*): \[%{EA:e:arr}\]", custom_patterns = custom_pats, fullmatch = False)
+    m = grok.match(text)
+    assert m['e'][0]['v'] == 1, print(m['e'][0]['v'])
+    assert m['e'][1]['v'] == 2, print(m['e'][1]['v'])
+    assert m['e'][2]['v'] == 3, print(m['e'][2]['v'])
+
+    custom_pats.update({"C":"{%{QS}: {%{QS}: %{NUMBER:d:int}}"})
+    grok = Grok("%{C:c}", custom_patterns=custom_pats, fullmatch=False)
+    m = grok.match(text)
+    assert m['c_d'] == 4, print(m['c_d'])
+
+    custom_pats.update({"A":"{(.*): %{C:c}, (.*): \[%{EA:e:arr}\]}"})
+
+    grok = Grok("%{A:a}", custom_patterns = custom_pats, fullmatch = False)
+
+
+    m = grok.match(text)
+    assert m['a_c_d'] == 4, print(m['a_c_d'])
+    assert m['a_e'][0]['v'] == 1, print(m['a_c_e'][0]['v'])
+    assert m['a_e'][1]['v'] == 2, print(m['a_c_e'][1]['v'])
+    assert m['a_e'][2]['v'] == 3, print(m['a_c_e'][2]['v'])
+def test_arr_struct_pats():
+    
+    custom_pats = {"POWER": "(?:%{NUMBER}|(-inf))", "HEX":"(?:(0[x,X])*(?:[0-9a-zA-Z]+))", "HEXENUM":"%{HEX:v}[ ]?", "HEXLINE":"%{HEXENUM:col:arr}\n?" }
+    
+    text = """
+Branch A
+	  txPma                            : -inf,
+	  txDpdPma                         : -inf,
+	  txPmb                            : -inf,
+	  txTorPmb                         : -inf,
+	  rfPower                          : -inf[dBm],
+	  avgIMpa0                         : 10[mAmp],
+	  pmErrCounterTotal                : 1
+	  pmErrCounterLast                 : 1
+	  pmDpdIrqStat                     : 0x00000000
+
+Branch B
+	  txPma                            : -inf,
+	  txDpdPma                         : -inf,
+	  txPmb                            : -inf,
+	  txTorPmb                         : -inf,
+	  rfPower                          : -inf[dBm],
+	  avgIMpa0                         : 10[mAmp],
+	  pmErrCounterTotal                : 1
+	  pmErrCounterLast                 : 1
+	  pmDpdIrqStat                     : 0x00000000
+
+Branch C
+	  txPma                            : -inf,
+	  txDpdPma                         : -inf,
+	  txPmb                            : -inf,
+	  txTorPmb                         : -0.00,
+	  rfPower                          : 54.50[dBm],
+	  avgIMpa0                         : 0[mAmp],
+	  pmErrCounterTotal                : 0
+	  pmErrCounterLast                 : 0
+	  pmDpdIrqStat                     : 0x00000000
+
+Branch D
+	  txPma                            : -inf,
+	  txDpdPma                         : -inf,
+	  txPmb                            : -inf,
+	  txTorPmb                         : -0.00,
+	  rfPower                          : 51.50[dBm],
+	  avgIMpa0                         : 0[mAmp],
+	  pmErrCounterTotal                : 0
+	  pmErrCounterLast                 : 0
+	  pmDpdIrqStat                     : 0x00000000
+
+Branch E
+	  txPma                            : -inf,
+	  txDpdPma                         : -inf,
+	  txPmb                            : -inf,
+	  txTorPmb                         : -inf,
+	  rfPower                          : -inf[dBm],
+	  avgIMpa0                         : 40[mAmp],
+	  pmErrCounterTotal                : 1
+	  pmErrCounterLast                 : 1
+	  pmDpdIrqStat                     : 0x00000000
+
+Branch F
+	  txPma                            : -inf,
+	  txDpdPma                         : -inf,
+	  txPmb                            : -inf,
+	  txTorPmb                         : -inf,
+	  rfPower                          : -inf[dBm],
+	  avgIMpa0                         : 0[mAmp],
+	  pmErrCounterTotal                : 1
+	  pmErrCounterLast                 : 1
+	  pmDpdIrqStat                     : 0x00000000
+
+Branch G
+	  txPma                            : -inf,
+	  txDpdPma                         : -inf,
+	  txPmb                            : -inf,
+	  txTorPmb                         : -40.58,
+	  rfPower                          : 10.92[dBm],
+	  avgIMpa0                         : 0[mAmp],
+	  pmErrCounterTotal                : 0
+	  pmErrCounterLast                 : 0
+	  pmDpdIrqStat                     : 0x00000000
+
+Branch H
+	  txPma                            : -inf,
+	  txDpdPma                         : -inf,
+	  txPmb                            : -inf,
+	  txTorPmb                         : -40.58,
+	  rfPower                          : 13.92[dBm],
+	  avgIMpa0                         : 0[mAmp],
+	  pmErrCounterTotal                : 0
+	  pmErrCounterLast                 : 0
+	  pmDpdIrqStat                     : 0x00000000
+
+Branch I
+	  txPma                            : -inf,
+	  txDpdPma                         : -inf,
+	  txPmb                            : -inf,
+	  txTorPmb                         : -inf,
+	  rfPower                          : -inf[dBm],
+	  avgIMpa0                         : 0[mAmp],
+	  pmErrCounterTotal                : 1
+	  pmErrCounterLast                 : 1
+	  pmDpdIrqStat                     : 0x00000000
+
+Branch J
+	  txPma                            : -inf,
+	  txDpdPma                         : -inf,
+	  txPmb                            : -inf,
+	  txTorPmb                         : -inf,
+	  rfPower                          : -inf[dBm],
+	  avgIMpa0                         : 0[mAmp],
+	  pmErrCounterTotal                : 1
+	  pmErrCounterLast                 : 1
+	  pmDpdIrqStat                     : 0x00000000
+
+Branch K
+	  txPma                            : -inf,
+	  txDpdPma                         : -inf,
+	  txPmb                            : -inf,
+	  txTorPmb                         : -1.33,
+	  rfPower                          : 50.17[dBm],
+	  avgIMpa0                         : 0[mAmp],
+	  pmErrCounterTotal                : 0
+	  pmErrCounterLast                 : 0
+	  pmDpdIrqStat                     : 0x00000000
+
+Branch L
+	  txPma                            : -inf,
+	  txDpdPma                         : -inf,
+	  txPmb                            : -inf,
+	  txTorPmb                         : -1.33,
+	  rfPower                          : 53.17[dBm],
+	  avgIMpa0                         : 0[mAmp],
+	  pmErrCounterTotal                : 0
+	  pmErrCounterLast                 : 0
+	  pmDpdIrqStat                     : 0x00000000
+"""
+    custom_pats.update({"BRANCH": """
+Branch %{WORD:brachid}
+	  txPma                            : %{POWER:txPma},
+	  txDpdPma                         : %{POWER:txDpdPma},
+	  txPmb                            : %{POWER:txPmb},
+	  txTorPmb                         : %{POWER:txTorPmb},
+	  rfPower                          : %{POWER:rfPower}\[dBm\],
+	  avgIMpa0                         : %{POWER:avgIMpa0}\[mAmp\],
+	  pmErrCounterTotal                : %{POWER:pmErrCounterTotal}
+	  pmErrCounterLast                 : %{POWER:pmErrCounterLast}
+	  pmDpdIrqStat                     : %{HEX:pmDpdIrqStat}
+"""})
+    grok = Grok("%{BRANCH:branch:arr}\n", custom_patterns = custom_pats, fullmatch = False)
+    m = grok.match(text)
+    for i in range(10):
+        assert (m['branch'][i]["brachid"] == chr(65 + i)), 'grok match failed:%s, %s' % (text, pat, )
+    # matches
+
 if __name__ == '__main__':
 
     #test_one_pat()

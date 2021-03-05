@@ -34,6 +34,7 @@ class Grok(object):
     def _match(pattern, all_pattern, text, namespace, fullmatch):
         type_mapper = {}
         py_regex_pattern = Pattern.compile(pattern, all_pattern, namespace, type_mapper, False)
+        #print(py_regex_pattern)
         regex_obj = re.compile(py_regex_pattern)
         
         match_obj = None
@@ -72,6 +73,7 @@ class Grok(object):
                     _text = _text[_end:]
                     _output, _end, _str = Grok._match(_pattern, all_pattern, _text, "", fullmatch)
                     if not _end:
+                        output[key].update({"__len": i + 1})
                         break
                     i += 1
                        
@@ -109,6 +111,9 @@ def _reload_patterns(patterns_dirs):
     """
     all_patterns = {}
     for dir in patterns_dirs:
+        if not os.path.exists(dir):
+            print("_reload_patterns:warning file not exist", dir)
+            continue
         for f in os.listdir(dir):
             patterns = _load_patterns_from_file(os.path.join(dir, f))
             all_patterns.update(patterns)
