@@ -68,8 +68,9 @@ class Grok(object):
                 _text = match
                 _output, _end, _str = Grok._match(_pattern, all_pattern, _text, "", fullmatch)
                 while _end and _text:
-                    output[key][i] = _output
-                    output[key][i].update({"__str":_str})
+                    idx = "%d"%i
+                    output[key][idx] = _output
+                    output[key][idx].update({"__str":_str})
                     _text = _text[_end:]
                     _output, _end, _str = Grok._match(_pattern, all_pattern, _text, "", fullmatch)
                     if not _end:
